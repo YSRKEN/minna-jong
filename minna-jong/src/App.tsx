@@ -6,39 +6,30 @@ firebase.initializeApp(firebaseConfig);
 
 const App: React.FC = () => {
   const [userName, setUserName] = useState('');
+  const [screenName, setScreenName] = useState('');
+  const [userId, setUserId] = useState('');
+  const [iconUrl, setIconUrl] = useState('');
 
   const onClickLoginByTwitter = () => {
     const provider = new firebase.auth.TwitterAuthProvider();
     firebase.auth().languageCode = 'ja';
     firebase.auth().signInWithPopup(provider).then(result => {
-      if (result.credential !== null) {
-        const credential: firebase.auth.OAuthCredential = result.credential;
-        const accessToken = credential.accessToken;
-        const secret = credential.secret;
-        const user = result.user;
-        console.log(credential);
-        console.log(accessToken);
-        console.log(secret);
-        console.log(user);
-        if (user !== null) {
-          window.alert(`ログイン完了。\naccessToken=${accessToken}\nsecret=${secret}\nuser=${user.displayName}`);
-          if (user.displayName !== null) {
-            setUserName(user.displayName);
-          }
+      console.log(result);
+      const userInfo = result.additionalUserInfo;
+      if (userInfo !== null && userInfo !== undefined) {
+        const profile = userInfo.profile;
+        if (profile !== null) {
+          setUserName((profile as any).name);
+          setScreenName((profile as any).screen_name);
+          setUserId((profile as any).id_str);
+          setIconUrl(((profile as any).profile_image_url_https as string).replace('_normal', ''));
         }
       } else {
-        window.alert('アクセストークンを取得できませんでした');
+        window.alert('ログインできませんでした。');
       }
-    }).catch(function(error) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      const email = error.email;
-      const credential = error.credential;
-      console.log(errorCode);
-      console.log(errorMessage);
-      console.log(email);
-      console.log(credential);
-      window.alert(`エラー発生。\nrrorCode=${errorCode}\nrrorMessage=${errorMessage}email=${email}`);
+    }).catch((error) => {
+      console.log(error);
+      window.alert(`ログインできませんでした。`);
     });
   };
 
@@ -48,7 +39,13 @@ const App: React.FC = () => {
       {
         userName === ''
         ? <button type="button" onClick={onClickLoginByTwitter}>Twitterでログイン</button>
-        : <h2>ユーザー名：{userName}</h2>
+        : <>
+          <h2>ユーザー名：{userName}</h2>
+          <h2>スクリーンネーム：{screenName}</h2>
+          <h2>ユーザーID：{userId}</h2>
+          <h2>アイコン：</h2>
+          <img src={iconUrl} />
+        </>
       }
     </div>
   );
